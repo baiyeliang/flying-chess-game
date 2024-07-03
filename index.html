@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>飞行棋小游戏</title>
+    <style>
+        .board {
+            display: grid;
+            grid-template-columns: repeat(10, 50px);
+            grid-template-rows: repeat(5, 50px);
+            margin: 20px auto;
+            position: relative;
+        }
+        .cell {
+            width: 50px;
+            height: 50px;
+            border: 1px solid black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .player1 {
+            background-color: red;
+            color: white;
+        }
+        .player2 {
+            background-color: blue;
+            color: white;
+        }
+        .center {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+        }
+        #controls {
+            text-align: center;
+            margin: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <h1>飞行棋小游戏</h1>
+    <div id="login">
+        <p>请输入密码进入游戏：</p>
+        <input type="password" id="password">
+        <button onclick="checkPassword()">进入</button>
+        <p id="login-error" style="color: red;" class="hidden">密码错误，请重试。</p>
+    </div>
+    <div id="game" class="hidden">
+        <div class="board">
+            <!-- 动态生成50个格子 -->
+            <script>
+                let boardHtml = "";
+                const spiralOrder = [
+                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10,
+                    20, 19, 18, 17, 16, 15, 14, 13, 12, 11,
+                    21, 22, 23, 24, 25, 26, 27, 28, 29, 30,
+                    40, 39, 38, 37, 36, 35, 34, 33, 32, 31,
+                    41, 42, 43, 44, 45, 46, 47, 48, 49, 50
+                ];
+                for (let i = 1; i <= 50; i++) {
+                    let position = spiralOrder.indexOf(i) + 1;
+                    boardHtml += `<div class="cell" id="cell-${position}">${position}</div>`;
+                }
+                document.write(boardHtml);
+            </script>
+            <div class="center">
+                <button onclick="rollDice()">掷骰子</button>
+                <p id="dice-output">骰子点数：0</p>
+            </div>
+        </div>
+        <div id="controls">
+            <button onclick="startGame()">开始游戏</button>
+            <button onclick="resetGame()">重新开始</button>
+            <button onclick="endGame()">结束游戏</button>
+        </div>
+        <p id="output"></p>
+    </div>
+
+    <script>
+        let positions = [0, 0];
+        let currentPlayer = 0;
+        let gameStarted = false;
+
+        const punishments = [
+            "罚站一分钟", "唱一首歌", "做10个俯卧撑", "发一个搞笑表情包到微信群里", "退两步",
+            "向对方说一句夸赞的话", "喝一杯水", "跳10下", "给自己讲个笑话", "发一个自拍到朋友圈",
+            "闭眼走三步", "唱一句歌，不可以重复", "分享你今天最开心的事", "停一轮", "模仿一个动物叫声",
+            "绕椅子转三圈", "给对方一个拥抱", "换个地方坐", "分享一个你最喜欢的笑话", "退三步",
+            "做20个深蹲", "发一个自拍到朋友群", "跳绳20次（假装跳绳也可以）", "喝一杯水", "向对方说一个秘密",
+            "做一个鬼脸", "分享一个小秘密", "发一个表情包", "模仿一个名人", "跳一段舞",
+            "闭眼唱一首歌", "摆一个搞笑的姿势拍照", "做一个小游戏（如石头剪刀布）", "分享一件糗事", "模仿对方说话",
+            "做一个动物的姿势", "给自己取一个搞笑的绰号", "发一个搞笑视频到朋友圈", "问对方一个问题", "模仿一个名人的讲话",
+            "讲一个鬼故事", "挤眉弄眼", "换个发型", "画一幅画", "分享一件你最喜欢的事情",
+            "模仿一个电视角色", "学说一种方言", "做一个小游戏", "退五步", "胜利！"
+        ];
+
+        function checkPassword() {
+            const password = document.getElementById("password").value;
+            if (password === "123") {
+                document.getElementById("login").classList.add("hidden");
+                document.getElementById("game").classList.remove("hidden");
+            } else {
+                document.getElementById("login-error").classList.remove("hidden");
+            }
+        }
+
+        function startGame() {
+            gameStarted = true;
+            positions = [0, 0];
+            currentPlayer = 0;
+            updateBoard();
+            document.getElementById("output").innerText = "游戏开始！";
+        }
+
+        function resetGame() {
+            startGame();
+        }
+
+        function endGame() {
+            gameStarted = false;
+            document.getElementById("output").innerText = "游戏结束！";
+        }
+
+        function rollDice() {
+            if (!gameStarted) {
+                document.getElementById("output").innerText = "请先开始游戏！";
+                return;
+            }
+            let roll = Math.floor(Math.random() * 6) + 1;
+            document.getElementById("dice-output").innerText = `骰子点数：${roll}`;
+            positions[currentPlayer] += roll;
+            if (positions[currentPlayer] >= 50) {
+                document.getElementById("output").innerText = `玩家 ${currentPlayer + 1} 获胜！`;
+                gameStarted = false;
+            } else {
+                let punishment = punishments[positions[currentPlayer] - 1];
+                document.getElementById("output").innerText = `玩家 ${currentPlayer + 1} 掷出了 ${roll}，前进到第 ${positions[currentPlayer]} 步。惩罚：${punishment}`;
+                currentPlayer = (currentPlayer + 1) % 2;
+            }
+            updateBoard();
+        }
+
+        function updateBoard() {
+            for (let i = 1; i <= 50; i++) {
+                document.getElementById(`cell-${i}`).classList.remove("player1", "player2");
+            }
+            if (positions[0] > 0) {
+                document.getElementById(`cell-${positions[0]}`).classList.add("player1");
+            }
+            if (positions[1] > 0) {
+                document.getElementById(`cell-${positions[1]}`).classList.add("player2");
+            }
+        }
+    </script>
+</body>
+</html>
